@@ -65,6 +65,30 @@ let theme = localStorage.getItem('theme') || 'auto';
 let alertTimers = [];
 const tz = "America/Sao_Paulo";
 
+  function loadDefault(){
+  const saved = localStorage.getItem('rotina_csv_v2');
+  if(saved){
+    data = parseCSV(saved);
+    renderTabs();
+    renderList();
+    setupAlerts();
+    return;
+  }
+  fetch('./rotina.csv')
+    .then(r=>{
+      if(!r.ok) throw new Error("Arquivo rotina.csv não encontrado!");
+      return r.text();
+    })
+    .then(txt=>{
+      data=parseCSV(txt);
+      renderTabs();
+      renderList();
+      setupAlerts();
+    })
+    .catch(err=>{
+      alert("Erro ao carregar rotina.csv: " + err.message + "\nVocê pode importar o arquivo manualmente usando o botão 'Importar CSV'.");
+    });
+}
 function setTheme(mode){
   theme = mode;
   localStorage.setItem('theme', mode);
