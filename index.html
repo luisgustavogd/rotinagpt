@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minha Rotina (CSV v2)</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<style>
+  :root { color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) {
+    body { background:#0f0f0f; color:#f3f3f3; }
+    .card { background:#1a1a1a; border-color:#333; }
+    .tab, .btn { background:#151515; border-color:#333; color:#f3f3f3; }
+    header { background:#0f0f0f; border-bottom-color:#222; }
+  }
+  body { font-family:-apple-system, system-ui, Arial, sans-serif; margin:0; background:#f8f8f8; color:#111; }
+  header { position:sticky; top:0; background:#fff; padding:10px 12px; border-bottom:1px solid #eee; display:flex; gap:8px; align-items:center; z-index:2;}
+  h1 { margin:0; font-size:18px; flex:1; }
+  .btn { padding:8px 10px; border:1px solid #ddd; border-radius:8px; background:#fafafa; font-size:12px; }
+  .tabs { display:flex; overflow-x:auto; gap:8px; padding:8px 12px; background:#fff; position:sticky; top:52px; border-bottom:1px solid #eee; z-index:1; }
+  .tab { padding:8px 12px; border-radius:999px; border:1px solid #ddd; background:#fafafa; white-space:nowrap; cursor:pointer; }
+  .tab.active { background:#e6f0ff; border-color:#bcd4ff; }
+  .list { padding:12px; }
+  .item { background:#fff; border-radius:10px; padding:12px; margin-bottom:10px; border:1px solid #eee; display:grid; grid-template-columns: 42% 1fr auto; gap:10px; align-items:center; }
+  .time { color:#555; font-weight:600; }
+  .desc { }
+  .meta { font-size:12px; opacity:.8; }
+  .done { width:22px; height:22px; border:2px solid #bbb; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+  .done.checked { background:#cfe9cf; border-color:#6bbf6b; }
+  .toolbar { padding: 8px 12px; display:flex; gap:8px; align-items:center; }
+  input[type=file] { display:none; }
+  .card { background:#fff; border:1px solid #eee; border-radius:10px; padding:10px; margin:10px 12px; }
+  .toggle { font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Minha Rotina</h1>
+  <button class="btn" id="btnTheme">Tema</button>
+  <button class="btn" id="btnImport">Importar CSV</button>
+  <button class="btn" id="btnExport">Exportar CSV</button>
+  <button class="btn" id="btnSave">Salvar</button>
+  <button class="btn" id="btnICS">Calendário (ICS)</button>
+  <input type="file" id="fileInput" accept=".csv,text/csv">
+</header>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="card">
+  <label class="toggle"><input type="checkbox" id="chkCalories" checked> Mostrar calorias</label> |
+  <label class="toggle"><input type="checkbox" id="chkNotes" checked> Mostrar observações</label> |
+  <label class="toggle"><input type="checkbox" id="chkEffort" checked> Mostrar esforço</label> |
+  <label class="toggle"><input type="checkbox" id="chkAlerts"> Alertas (enquanto aberto)</label>
+</div>
+
+<div class="list" id="list"></div>
+<div class="footer"></div>
+
+<script>
+let data = {}; // {Dia: [{Horario,Descricao,Calorias,Observacoes,Esforco}]}
+const daysOrder = ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
+let activeDay = localStorage.getItem('activeDay') || daysOrder[(new Date().getDay()+6)%7]; // Monday=0
+let theme = localStorage.getItem('theme') || 'auto';
+let alertTimers = [];
+const tz = "America/Sao_Paulo";
+
+function setTheme(mode){
+  theme = mode;
+  localStorage.setItem('theme', mode);
+  if(mode==='dark'){ document.documentElement.style.colorScheme='dark'; document.body.style.background='#0f0f0f'; }
+  else if(mode==='light'){ document.documentElement.style.colorScheme='light'; document.body.style.background='#f8f8f8'; }
+  else { document.documentElement.style.colorScheme='light dark'; document.body.style.background=''; }
+}
+setTheme(theme);
+
+document.getElementById('btnTheme').onclick = () => {
+  const next = theme==='auto' ? 'dark' : theme==='dark' ? 'light' : 'auto';
+  setTheme(next);
+  alert('Tema: ' + next);
+};
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+  const header = lines.shift().split(',');
+  const idx = {
+    Dia: header.indexOf('Dia'),
+    Horario: header.indexOf('Horario'),
+    Descricao: header.indexOf('Descricao'),
+    Calorias: header.indexOf('Calorias'),
+    Observacoes: header.indexOf('Observacoes'),
+    Esforco: header.indexOf('Esforco')
+  };
+  const temp = {};
+  for (const line of lines) {
+    // handle quoted CSV
+    let parts = []; let cur = ''; let inQ = false;
+    for (let i=0;i<line.length;i++){
+      const c = line[i];
+      if(c==='"'){ if(inQ && line[i+1]==='"'){ cur+='"'; i++; } else { inQ=!inQ; } }
+      else if(c===',' && !inQ){ parts.push(cur); cur=''; }
+      else { cur+=c; }
+    }
+    parts.push(cur);
+    const dia = (parts[idx.Dia]||'').trim();
+    const hor = (parts[idx.Horario]||'').trim();
+    if(!dia || !hor) continue;
+    const obj = {
+      Horario: hor,
+      Descricao: (parts[idx.Descricao]||'').trim(),
+      Calorias: (parts[idx.Calorias]||'').trim(),
+      Observacoes: (parts[idx.Observacoes]||'').trim(),
+      Esforco: (parts[idx.Esforco]||'').trim()
+    };
+    if(!temp[dia]) temp[dia]=[];
+    temp[dia].push(obj);
+  }
+  // order by time if present
+  for(const d in temp){
+    temp[d].sort((a,b)=>{
+      const ta = a.Horario.startsWith('Exerc')?'99:99':(a.Horario.match(/^\d{2}:\d{2}/)?.[0]||'98:98');
+      const tb = b.Horario.startsWith('Exerc')?'99:99':(b.Horario.match(/^\d{2}:\d{2}/)?.[0]||'98:98');
+      return ta.localeCompare(tb);
+    });
+  }
+  return temp;
+}
+
+function toCSV(obj){
+  let out = "Dia,Horario,Descricao,Calorias,Observacoes,Esforco\n";
+  for(const d of daysOrder){
+    const arr = obj[d]||[];
+    for(const it of arr){
+      const esc = s => {
+        s = (s||'').toString();
+        return s.includes(',')||s.includes('"') ? '"'+s.replaceAll('"','""')+'"' : s;
+      };
+      out += [d, it.Horario, esc(it.Descricao), esc(it.Calorias), esc(it.Observacoes), esc(it.Esforco)].join(',') + "\n";
+    }
+  }
+  return out;
+}
+
+function renderTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML='';
+  for(const d of daysOrder){
+    const btn = document.createElement('button');
+    btn.className='tab'+(d===activeDay?' active':'');
+    btn.textContent=d;
+    btn.onclick=()=>{ activeDay=d; localStorage.setItem('activeDay', d); renderTabs(); renderList(); setupAlerts(); };
+    tabs.appendChild(btn);
+  }
+}
+
+function keyFor(d,t){ return 'done_'+d+'_'+t; }
+
+function renderList(){
+  const showCal = document.getElementById('chkCalories').checked;
+  const showObs = document.getElementById('chkNotes').checked;
+  const showEff = document.getElementById('chkEffort').checked;
+  const container = document.getElementById('list');
+  container.innerHTML='';
+  const items = data[activeDay]||[];
+  for(const it of items){
+    const row = document.createElement('div');
+    row.className='item';
+    const done = document.createElement('div');
+    const doneKey = keyFor(activeDay, it.Horario);
+    const checked = localStorage.getItem(doneKey)==='1';
+    done.className='done'+(checked?' checked':'');
+    done.onclick=()=>{ const v=done.classList.toggle('checked'); localStorage.setItem(doneKey, v?'1':'0'); };
+    const timeEl = document.createElement('div'); timeEl.className='time'; timeEl.textContent=it.Horario;
+    const desc = document.createElement('div'); desc.className='desc'; desc.textContent=it.Descricao;
+    const meta = document.createElement('div'); meta.className='meta';
+    const parts=[];
+    if(showCal && it.Calorias) parts.push('Kcal: '+it.Calorias);
+    if(showEff && it.Esforco) parts.push('Esforço: '+it.Esforco);
+    if(showObs && it.Observacoes) parts.push('Obs: '+it.Observacoes);
+    meta.textContent = parts.join(' • ');
+    row.appendChild(done); row.appendChild(timeEl); row.appendChild(desc);
+    if(parts.length) row.appendChild(meta);
+    container.appendChild(row);
+  }
+}
+
+function loadDefault(){
+  const saved = localStorage.getItem('rotina_csv_v2');
+  if(saved){ data = parseCSV(saved); renderTabs(); renderList(); setupAlerts(); return; }
+  fetch('./rotina.csv').then(r=>r.text()).then(txt=>{ data=parseCSV(txt); renderTabs(); renderList(); setupAlerts(); });
+}
+
+document.getElementById('btnImport').onclick=()=>document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange=async(ev)=>{
+  const f = ev.target.files[0]; if(!f) return;
+  const txt = await f.text();
+  data = parseCSV(txt);
+  renderTabs(); renderList(); setupAlerts();
+};
+
+document.getElementById('btnExport').onclick=()=>{
+  const csv = toCSV(data);
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='rotina-export-v2.csv'; a.click();
+};
+
+document.getElementById('btnSave').onclick=()=>{
+  const csv = toCSV(data);
+  localStorage.setItem('rotina_csv_v2', csv);
+  alert('Rotina salva no aparelho.');
+};
+
+// Foreground alerts (while app aberto): checks every 30s and warns 5 min before & at time
+function clearTimers(){ alertTimers.forEach(id=>clearInterval(id)); alertTimers=[]; }
+function setupAlerts(){
+  clearTimers();
+  const chk = document.getElementById('chkAlerts'); if(!chk.checked) return;
+  const items = data[activeDay]||[];
+  const parseHM = s => {
+    const m = s.match(/^(\d{2}):(\d{2})(?:\-(\d{2}):(\d{2}))?/);
+    if(!m) return null;
+    return {h: +m[1], mi:+m[2], h2:m[3]?+m[3]:null, mi2:m[4]?+m[4]:null};
+  };
+  const notify = (msg)=>{
+    try { if(Notification && Notification.permission==='granted'){ new Notification(msg); return; } } catch(e){}
+    alert(msg);
+  };
+  const check = ()=>{
+    const now = new Date();
+    const nowMin = now.getHours()*60 + now.getMinutes();
+    items.forEach(it=>{
+      const t = parseHM(it.Horario); if(!t) return;
+      const startMin = t.h*60 + t.mi;
+      if(nowMin===startMin-5){ notify(`Em 5 min: ${it.Horario} — ${it.Descricao}`); }
+      if(nowMin===startMin){ notify(`Agora: ${it.Horario} — ${it.Descricao}`); }
+    });
+  };
+  // try permission if user enables
+  try { if('Notification' in window && Notification.permission==='default'){ Notification.requestPermission(); } } catch(e){}
+  check();
+  alertTimers.push(setInterval(check, 30000));
+}
+document.getElementById('chkAlerts').onchange=setupAlerts;
+document.getElementById('chkCalories').onchange=renderList;
+document.getElementById('chkNotes').onchange=renderList;
+document.getElementById('chkEffort').onchange=renderList;
+
+// Export today's items to ICS (native Calendar with 5-min alert)
+document.getElementById('btnICS').onclick=()=>{
+  const items = data[activeDay]||[];
+  const pad = n=> (n<10?'0':'')+n;
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = pad(today.getMonth()+1);
+  const d = pad(today.getDate());
+  let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MinhaRotina//CSVv2//PT-BR\nCALSCALE:GREGORIAN\n";
+  items.forEach((it,i)=>{
+    const tm = it.Horario.match(/^(\d{2}):(\d{2})(?:\-(\d{2}):(\d{2}))?/);
+    if(!tm) return;
+    const sh = tm[1], sm = tm[2];
+    const eh = tm[3]||tm[1], em = tm[4]||tm[2];
+    const dtstart = f"{y}{m}{d}T{sh}{sm}00";
+    const dtend = f"{y}{m}{d}T{eh}{em}00";
+    const uid = f"{y}{m}{d}-{i}@minharotina";
+    const summary = it.Descricao.replace(/\n|\r/g,' ');
+    ics += "BEGIN:VEVENT\n";
+    ics += f"UID:{uid}\nDTSTAMP:{y}{m}{d}T000000Z\n";
+    ics += f"DTSTART;TZID=America/Sao_Paulo:{dtstart}\n";
+    ics += f"DTEND;TZID=America/Sao_Paulo:{dtend}\n";
+    ics += f"SUMMARY:{summary}\n";
+    ics += "BEGIN:VALARM\nTRIGGER:-PT5M\nACTION:DISPLAY\nDESCRIPTION:Lembrete\nEND:VALARM\n";
+    ics += "END:VEVENT\n";
+  });
+  ics += "END:VCALENDAR\n";
+  const blob = new Blob([ics], {type:'text/calendar'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rotina-hoje.ics'; a.click();
+};
+
+loadDefault();
+
+// SW for offline cache (if hosted)
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('./service-worker.js').catch(()=>{}); }
+</script>
+</body>
+</html>
