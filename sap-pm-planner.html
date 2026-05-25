@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAP PM Roll-out Planner</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg-light: #f0f4fa;
+    --bg-dark: #0d1017;
+    --card-light: #fff;
+    --card-dark: #161b27;
+    --border-light: #e2e8f0;
+    --border-dark: #2a3150;
+    --btn-bg-light: #fff;
+    --btn-bg-dark: #1e2438;
+    --btn-border-light: #ccd5e3;
+    --btn-border-dark: #3a4566;
+    --btn-color-light: #1a2040;
+    --btn-color-dark: #d8e0f5;
+    --tab-active-light: #e8f0fe;
+    --tab-active-dark: #162050;
+    --tab-border-active: #2563eb;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --success: #16a34a;
+    --meta-light: #64748b;
+    --meta-dark: #8b9dc9;
+    --prog-bg-light: #e2e8f0;
+    --prog-bg-dark: #2a3150;
+    --week-bg-light: #eff6ff;
+    --week-color-light: #1d4ed8;
+    --week-bg-dark: #172045;
+    --week-color-dark: #93c5fd;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: var(--bg-dark); color: #c8d4f0; }
+    .card, .item { background: var(--card-dark); border-color: var(--border-dark); }
+    header, .tabs-bar, .filters-bar { background: var(--bg-dark); border-color: var(--border-dark); }
+    .tab, .btn { background: var(--btn-bg-dark); border-color: var(--btn-border-dark); color: var(--btn-color-dark); }
+    .tab.active { background: var(--tab-active-dark); border-color: var(--tab-border-active); color: #fff; }
+    .meta { color: var(--meta-dark); }
+    .prog-bg { background: var(--prog-bg-dark); }
+    .week-tag { background: var(--week-bg-dark); color: var(--week-color-dark); }
+    #modal-overlay { background: rgba(0,0,0,0.72); }
+    #modal-box { background: var(--card-dark); border-color: var(--border-dark); color: #c8d4f0; }
+    #prompt-text { background: #0d1117; color: #c8d4f0; border-color: var(--border-dark); }
+    select { background: var(--btn-bg-dark); color: var(--btn-color-dark); border-color: var(--btn-border-dark); }
+    .summary-bar { background: var(--card-dark); border-color: var(--border-dark); }
+    .badge { background: #2a3150; color: var(--meta-dark); }
+    .tab.active .badge { background: var(--accent); color: #fff; }
+    .done { background: #1a2030; border-color: #3a4566; }
+    .done.checked { background: #14291e; border-color: var(--success); }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, system-ui, "Segoe UI", Arial, sans-serif; background: var(--bg-light); color: #1a2040; }
+
+  header {
+    position: sticky; top: 0;
+    background: var(--card-light);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    z-index: 20;
+  }
+  header h1 { font-size: 16px; flex: 1; min-width: 160px; }
+  header h1 .sap { color: #1657a8; font-weight: 800; }
+  header h1 .pm  { color: var(--accent); }
+
+  .btn {
+    padding: 7px 12px;
+    border: 1px solid var(--btn-border-light);
+    border-radius: 8px;
+    background: var(--btn-bg-light);
+    font-size: 12px;
+    color: var(--btn-color-light);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .btn:hover, .btn:focus { background: var(--accent); color: #fff; border-color: var(--accent); outline: none; }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn.sm { padding: 5px 10px; font-size: 11px; }
+
+  .tabs-bar {
+    position: sticky; top: 50px;
+    background: var(--card-light);
+    border-bottom: 1px solid var(--border-light);
+    display: flex; overflow-x: auto; gap: 6px; padding: 8px 16px;
+    scrollbar-width: none; z-index: 19;
+  }
+  .tabs-bar::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--btn-border-light);
+    background: var(--btn-bg-light);
+    white-space: nowrap;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--btn-color-light);
+    display: flex; align-items: center; gap: 6px;
+    transition: background .15s, border-color .15s;
+  }
+  .tab.active { background: var(--tab-active-light); border-color: var(--tab-border-active); font-weight: 600; }
+  .badge {
+    font-size: 10px; font-weight: 700;
+    background: #e8edf5; color: #64748b;
+    padding: 2px 7px; border-radius: 999px;
+    transition: background .15s;
+  }
+  .tab.active .badge { background: var(--accent); color: #fff; }
+
+  .filters-bar {
+    padding: 8px 16px;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    font-size: 12px; color: var(--meta-light);
+  }
+  select {
+    padding: 5px 10px;
+    border: 1px solid var(--btn-border-light);
+    border-radius: 7px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--btn-color-light);
+    background: var(--btn-bg-light);
+  }
+
+  .prog-wrap { padding: 0 16px 10px; }
+  .prog-label { font-size: 11px; color: var(--meta-light); margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .prog-bg { height: 5px; border-radius: 3px; background: var(--prog-bg-light); overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 3px; background: var(--success); transition: width .35s ease; }
+
+  .list { padding: 8px 16px 80px; }
+  .item {
+    background: var(--card-light);
+    border-radius: 10px;
+    padding: 11px 13px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border-light);
+    display: flex; gap: 10px; align-items: flex-start;
+    transition: opacity .2s;
+  }
+  .item.is-done { opacity: 0.5; }
+
+  .done {
+    width: 20px; height: 20px; min-width: 20px;
+    border: 2px solid #c0c9dc;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    background: #f7f9fc;
+    transition: background .15s, border-color .15s;
+    margin-top: 2px;
+    font-size: 12px; font-weight: 700; color: var(--success);
+  }
+  .done.checked { background: #dcfce7; border-color: var(--success); }
+
+  .item-body { flex: 1; min-width: 0; }
+  .item-head { display: flex; gap: 7px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 4px; }
+  .week-tag {
+    font-size: 11px; font-weight: 700;
+    color: var(--week-color-light);
+    background: var(--week-bg-light);
+    padding: 2px 8px; border-radius: 4px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .item-title { font-size: 13px; font-weight: 500; line-height: 1.4; }
+  .meta { font-size: 11px; color: var(--meta-light); display: flex; flex-wrap: wrap; gap: 10px; margin-top: 3px; }
+  .meta span { white-space: nowrap; }
+
+  .empty { text-align: center; padding: 48px 20px; color: var(--meta-light); font-size: 14px; }
+
+  .summary-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card-light);
+    border-top: 1px solid var(--border-light);
+    padding: 7px 16px;
+    font-size: 11px; color: var(--meta-light);
+    display: flex; gap: 16px; flex-wrap: wrap; z-index: 18;
+  }
+  .summary-bar strong { color: var(--accent); }
+
+  #modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 100;
+    align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  #modal-overlay.open { display: flex; }
+  #modal-box {
+    background: var(--card-light);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 20px;
+    width: 100%; max-width: 680px;
+    max-height: 85vh; overflow-y: auto;
+  }
+  #modal-box h2 { font-size: 15px; margin-bottom: 6px; }
+  #modal-box p { font-size: 12px; color: var(--meta-light); margin-bottom: 12px; }
+  #prompt-text {
+    width: 100%; height: 340px;
+    font-family: "Cascadia Code", "Fira Mono", monospace;
+    font-size: 11.5px; line-height: 1.55;
+    border: 1px solid var(--border-light);
+    border-radius: 8px; padding: 12px;
+    resize: vertical;
+    color: var(--btn-color-light);
+    background: var(--btn-bg-light);
+  }
+  .modal-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  input[type=file] { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="sap">SAP</span> <span class="pm">PM</span> Roll-out Planner</h1>
+  <button class="btn sm" id="btn-import">Importar CSV</button>
+  <button class="btn sm" id="btn-export">Exportar CSV</button>
+  <button class="btn sm" id="btn-save">Salvar</button>
+  <button class="btn primary sm" id="btn-copilot">⚡ Gerar Prompt Copilot</button>
+  <input type="file" id="file-input" accept=".csv,text/csv">
+</header>
+
+<div class="tabs-bar" id="tabs"></div>
+
+<div class="filters-bar">
+  <span>Responsável:</span>
+  <select id="filter-resp"><option value="">Todos</option></select>
+  <span id="filter-count" style="margin-left:4px;"></span>
+</div>
+
+<div class="prog-wrap">
+  <div class="prog-label">
+    <span id="prog-label">0 de 0 atividades concluídas</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div class="prog-bg"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<div class="list" id="list"></div>
+<div class="summary-bar" id="summary-bar"></div>
+
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h2>⚡ Prompt para Microsoft Copilot</h2>
+    <p>
+      Copie o texto abaixo e cole no chat do <strong>Copilot no Excel</strong> (painel lateral)
+      ou em <strong>copilot.microsoft.com</strong>. O prompt já inclui o status atual do projeto.
+      <br><br>
+      <strong>Dica Excel:</strong> Você também pode exportar o CSV e abrir no Excel — o Copilot
+      consegue analisar os dados diretamente na planilha.
+    </p>
+    <textarea id="prompt-text" readonly></textarea>
+    <div class="modal-actions">
+      <button class="btn primary" id="btn-copy-prompt">Copiar Prompt</button>
+      <button class="btn" id="btn-close-modal">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PHASES = ["Kickoff", "Blueprint", "Realizacao", "Testes", "Treinamento", "Go-Live"];
+
+let data = {};
+let activePhase = localStorage.getItem("sap_phase") || PHASES[0];
+let filterResp = "";
+
+// ── CSV ──────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return {};
+  const raw = lines.shift();
+  const header = raw.split(",").map(h => h.trim());
+  const col = h => header.indexOf(h);
+  const temp = {};
+  for (const line of lines) {
+    const p = splitCSV(line);
+    const fase = (p[col("Fase")] || "").trim();
+    if (!fase) continue;
+    if (!temp[fase]) temp[fase] = [];
+    temp[fase].push({
+      Semana:      (p[col("Semana")]      || "").trim(),
+      Atividade:   (p[col("Atividade")]   || "").trim(),
+      Responsavel: (p[col("Responsavel")] || "").trim(),
+      DuracaoDias: (p[col("DuracaoDias")] || "").trim(),
+      Observacoes: (p[col("Observacoes")] || "").trim(),
+    });
+  }
+  return temp;
+}
+
+function splitCSV(line) {
+  const parts = []; let cur = ""; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+    else if (c === "," && !inQ) { parts.push(cur); cur = ""; }
+    else cur += c;
+  }
+  parts.push(cur);
+  return parts;
+}
+
+function toCSV(d) {
+  const esc = s => { s = (s||"").toString(); return (s.includes(",") || s.includes('"')) ? '"'+s.replaceAll('"','""')+'"' : s; };
+  let out = "Fase,Semana,Atividade,Responsavel,DuracaoDias,Observacoes\n";
+  for (const fase of PHASES)
+    for (const it of (d[fase] || []))
+      out += [fase, it.Semana, esc(it.Atividade), esc(it.Responsavel), it.DuracaoDias, esc(it.Observacoes)].join(",") + "\n";
+  return out;
+}
+
+// ── State ────────────────────────────────────────────────────────
+function key(fase, semana, ativ) { return `sap_ck_${fase}_${semana}_${ativ.slice(0,32)}`; }
+function isDone(fase, it) { return localStorage.getItem(key(fase, it.Semana, it.Atividade)) === "1"; }
+function setDone(fase, it, v) { localStorage.setItem(key(fase, it.Semana, it.Atividade), v ? "1" : "0"); }
+
+// ── Responsáveis ──────────────────────────────────────────────────
+function getResps() {
+  const s = new Set();
+  for (const f of PHASES) for (const it of (data[f] || [])) if (it.Responsavel) s.add(it.Responsavel);
+  return [...s].sort();
+}
+function buildRespFilter() {
+  const sel = document.getElementById("filter-resp");
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos</option>';
+  for (const r of getResps()) {
+    const opt = document.createElement("option");
+    opt.value = r; opt.textContent = r;
+    if (r === cur) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+// ── Phase progress ────────────────────────────────────────────────
+function phaseProgress(fase) {
+  const items = data[fase] || [];
+  return { total: items.length, done: items.filter(it => isDone(fase, it)).length };
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────
+function renderTabs() {
+  const el = document.getElementById("tabs");
+  el.innerHTML = "";
+  for (const fase of PHASES) {
+    const { total, done } = phaseProgress(fase);
+    const btn = document.createElement("button");
+    btn.className = "tab" + (fase === activePhase ? " active" : "");
+    btn.innerHTML = `${fase} <span class="badge">${done}/${total}</span>`;
+    btn.onclick = () => { activePhase = fase; localStorage.setItem("sap_phase", fase); renderTabs(); renderList(); };
+    el.appendChild(btn);
+  }
+}
+
+// ── List ──────────────────────────────────────────────────────────
+function renderList() {
+  const container = document.getElementById("list");
+  container.innerHTML = "";
+
+  const all = data[activePhase] || [];
+  const visible = filterResp ? all.filter(it => it.Responsavel === filterResp) : all;
+  const doneCnt = all.filter(it => isDone(activePhase, it)).length;
+  const pct = all.length ? Math.round(doneCnt / all.length * 100) : 0;
+
+  document.getElementById("prog-label").textContent = `${doneCnt} de ${all.length} atividades concluídas`;
+  document.getElementById("prog-pct").textContent = pct + "%";
+  document.getElementById("prog-fill").style.width = pct + "%";
+  document.getElementById("filter-count").textContent =
+    filterResp && visible.length !== all.length ? `(${visible.length} de ${all.length} exibidas)` : "";
+
+  if (!visible.length) {
+    container.innerHTML = '<div class="empty">Nenhuma atividade encontrada para este filtro.</div>';
+    updateSummary(); return;
+  }
+
+  for (const it of visible) {
+    const done = isDone(activePhase, it);
+    const row = document.createElement("div");
+    row.className = "item" + (done ? " is-done" : "");
+
+    const cb = document.createElement("div");
+    cb.className = "done" + (done ? " checked" : "");
+    cb.textContent = done ? "✓" : "";
+    cb.onclick = () => {
+      setDone(activePhase, it, !isDone(activePhase, it));
+      renderTabs(); renderList();
+    };
+
+    const body = document.createElement("div");
+    body.className = "item-body";
+
+    const head = document.createElement("div");
+    head.className = "item-head";
+    if (it.Semana) {
+      const wk = document.createElement("span");
+      wk.className = "week-tag"; wk.textContent = it.Semana;
+      head.appendChild(wk);
+    }
+    const title = document.createElement("span");
+    title.className = "item-title"; title.textContent = it.Atividade;
+    head.appendChild(title);
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const parts = [];
+    if (it.Responsavel) parts.push(`👤 ${it.Responsavel}`);
+    if (it.DuracaoDias) parts.push(`⏱ ${it.DuracaoDias}d`);
+    if (it.Observacoes) parts.push(`📝 ${it.Observacoes}`);
+    meta.innerHTML = parts.map(p => `<span>${p}</span>`).join("");
+
+    body.appendChild(head);
+    if (parts.length) body.appendChild(meta);
+    row.appendChild(cb); row.appendChild(body);
+    container.appendChild(row);
+  }
+  updateSummary();
+}
+
+// ── Summary bar ───────────────────────────────────────────────────
+function updateSummary() {
+  let total = 0, done = 0;
+  for (const f of PHASES) { const p = phaseProgress(f); total += p.total; done += p.done; }
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById("summary-bar").innerHTML =
+    `<span>Total do projeto: <strong>${done}/${total}</strong> atividades</span>` +
+    `<span>Progresso geral: <strong>${pct}%</strong></span>`;
+}
+
+// ── Load ──────────────────────────────────────────────────────────
+function loadData() {
+  const saved = localStorage.getItem("sap_pm_csv");
+  if (saved) {
+    data = parseCSV(saved);
+    buildRespFilter(); renderTabs(); renderList();
+    return;
+  }
+  fetch("./sap-pm-rollout.csv")
+    .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+    .then(txt => { data = parseCSV(txt); buildRespFilter(); renderTabs(); renderList(); })
+    .catch(() => {
+      document.getElementById("list").innerHTML =
+        '<div class="empty">Importe o arquivo <strong>sap-pm-rollout.csv</strong> para começar, ou use o botão Importar CSV.</div>';
+    });
+}
+
+// ── Import / Export / Save ────────────────────────────────────────
+document.getElementById("btn-import").onclick = () => document.getElementById("file-input").click();
+document.getElementById("file-input").onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  const txt = await f.text();
+  data = parseCSV(txt);
+  buildRespFilter(); renderTabs(); renderList();
+  ev.target.value = "";
+};
+document.getElementById("btn-export").onclick = () => {
+  const blob = new Blob([toCSV(data)], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "sap-pm-rollout.csv"; a.click();
+};
+document.getElementById("btn-save").onclick = () => {
+  localStorage.setItem("sap_pm_csv", toCSV(data));
+  alert("Progresso salvo neste dispositivo.");
+};
+document.getElementById("filter-resp").onchange = ev => { filterResp = ev.target.value; renderList(); };
+
+// ── Copilot prompt generator ──────────────────────────────────────
+function generatePrompt() {
+  const lines = [];
+  lines.push("Você é um especialista em implementação do módulo SAP PM (Plant Maintenance).");
+  lines.push("A empresa já utiliza SAP PM em outras unidades. O objetivo é fazer o roll-out para");
+  lines.push("uma NOVA PLANTA que está sendo construída, aproveitando o modelo corporativo existente.\n");
+  lines.push("Abaixo está o plano de atividades e o status atual do projeto:\n");
+  lines.push("═══════════════════════════════════════════════════");
+  lines.push("  PROJETO: Roll-out SAP PM — Nova Planta");
+  lines.push("  Empresa: [PREENCHA]  |  Planta: [PREENCHA]");
+  lines.push("  Início: [PREENCHA]   |  Go-Live previsto: Semana 21");
+  lines.push("═══════════════════════════════════════════════════\n");
+
+  let totalDone = 0, totalAll = 0;
+  for (const fase of PHASES) {
+    const items = data[fase] || [];
+    const done = items.filter(it => isDone(fase, it)).length;
+    totalDone += done; totalAll += items.length;
+    const pct = items.length ? Math.round(done / items.length * 100) : 0;
+    const bar = "█".repeat(Math.round(pct / 10)) + "░".repeat(10 - Math.round(pct / 10));
+    lines.push(`── FASE: ${fase.toUpperCase()} [${bar}] ${done}/${items.length} (${pct}%)`);
+    for (const it of items) {
+      const ok = isDone(fase, it);
+      lines.push(`  ${ok ? "✅" : "⬜"} [${it.Semana}] ${it.Atividade}`);
+      lines.push(`      Resp: ${it.Responsavel}  |  Duração: ${it.DuracaoDias}d  |  ${it.Observacoes}`);
+    }
+    lines.push("");
+  }
+
+  const gPct = totalAll ? Math.round(totalDone / totalAll * 100) : 0;
+  lines.push(`PROGRESSO GERAL: ${totalDone}/${totalAll} atividades concluídas (${gPct}%)\n`);
+  lines.push("═══════════════════════════════════════════════════");
+  lines.push("PERGUNTAS:\n");
+  lines.push("1. Quais atividades estão no CAMINHO CRÍTICO para o go-live? Explique as dependências.");
+  lines.push("2. Há riscos técnicos ou organizacionais que podem comprometer o prazo? Como mitigá-los?");
+  lines.push("3. Com o status atual, o que devo priorizar nas PRÓXIMAS 2 SEMANAS?");
+  lines.push("4. O cronograma de 22 semanas é realista? Existe algo que pode ser paralelizado?");
+  lines.push("5. Quais lições de outros projetos SAP PM devo considerar para a gestão de mudança com os usuários da nova planta?");
+
+  return lines.join("\n");
+}
+
+document.getElementById("btn-copilot").onclick = () => {
+  document.getElementById("prompt-text").value = generatePrompt();
+  document.getElementById("modal-overlay").classList.add("open");
+};
+document.getElementById("btn-close-modal").onclick = () =>
+  document.getElementById("modal-overlay").classList.remove("open");
+document.getElementById("modal-overlay").onclick = ev => {
+  if (ev.target === document.getElementById("modal-overlay"))
+    document.getElementById("modal-overlay").classList.remove("open");
+};
+document.getElementById("btn-copy-prompt").onclick = () => {
+  const ta = document.getElementById("prompt-text");
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const btn = document.getElementById("btn-copy-prompt");
+    btn.textContent = "✓ Copiado!";
+    setTimeout(() => { btn.textContent = "Copiar Prompt"; }, 2200);
+  }).catch(() => { ta.select(); document.execCommand("copy"); });
+};
+
+// ── Init ──────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

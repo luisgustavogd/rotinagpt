@@ -1,0 +1,50 @@
+Fase,Semana,Atividade,Responsavel,DuracaoDias,Observacoes
+Kickoff,S1,Reunião de kickoff com Diretoria e Gerência,PMO / Consultor,1,Apresentar metodologia e cronograma macro
+Kickoff,S1,Apresentação do escopo e modelo corporativo SAP PM,Consultor SAP PM,1,Referenciar processos das demais plantas
+Kickoff,S1,Confirmação dos Key Users por área,Gerente de Manutenção,1,Definir representantes de Manutenção e TI
+Kickoff,S2,Configuração de acessos ao ambiente de desenvolvimento,Basis / TI,1,Perfis de acesso ao sistema SAP
+Kickoff,S2,Visita técnica à planta em construção,Consultor / Key User,2,Levantar layout e ativos planejados
+Kickoff,S2,Levantamento inicial de equipamentos e instalações planejadas,Key User Manutenção,3,Elaborar lista preliminar de FLs e equipamentos
+Kickoff,S2,Alinhamento do cronograma detalhado com o time,PMO,1,Validar datas marco com stakeholders
+Blueprint,S3,Workshop: Estrutura de Localização Funcional (IFLOT),Consultor SAP PM,2,Definir hierarquia de FLs da nova planta
+Blueprint,S3,Workshop: Cadastro e Classificação de Equipamentos,Consultor SAP PM,1,Alinhar categorias e estruturas de equipamentos
+Blueprint,S4,Workshop: Ordens de Manutenção (IW31-IW38),Consultor SAP PM,2,Corretiva e emergencial — fluxo completo
+Blueprint,S4,Workshop: Planos de Manutenção Preventiva (IP01/IP41),Consultor SAP PM,2,Calendário e orientado a contador
+Blueprint,S5,Workshop: Catálogos de Dano / Causa / Atividade,Consultor / Key User,1,Validar catálogos do modelo corporativo
+Blueprint,S5,Workshop: Centros de Trabalho e Grupos de Planejamento,Consultor / Key User,1,Definir CTs e grupos específicos da planta
+Blueprint,S5,Revisão e adaptação do modelo de dados mestres corporativos,Consultor SAP PM,3,Garantir alinhamento com padrão da empresa
+Blueprint,S6,Definição da estrutura organizacional (Centro / Área / Setor PM),PMO / Consultor,1,Criar centro de manutenção no sistema
+Blueprint,S6,Aprovação formal do Blueprint pelos responsáveis,Gerente / Sponsor,2,Sign-off obrigatório antes da realização
+Realizacao,S7,Configuração da estrutura organizacional no SPRO,Consultor / Basis,2,Centro de Manutenção e parametrização base
+Realizacao,S7,Parametrização do módulo PM para a nova planta,Consultor SAP PM,3,Tipos de ordem e status de sistema
+Realizacao,S8,Carga de dados: Localizações Funcionais (LSMW / LTMC),Consultor / Key User,5,Validar hierarquia antes da carga
+Realizacao,S9,Carga de dados: Equipamentos e hierarquia técnica,Consultor / Key User,5,Incluir dados de fabricante e garantia
+Realizacao,S10,Carga de dados: Planos de Manutenção,Consultor / Key User,5,Validar frequências com engenharia
+Realizacao,S11,Carga de dados: Listas de Objetos e Pontos de Medição,Consultor / Key User,3,Necessário para manutenção preditiva
+Realizacao,S11,Carga de dados: Centros de Trabalho (CR01),Key User RH / Manutenção,2,Capacidade e custo por hora
+Realizacao,S12,Integração com MM: depósito e ponto de entrega de materiais,Consultor MM / PM,3,Garantir reserva de material via ordem PM
+Realizacao,S12,Desenvolvimento de relatórios específicos (Z-PM),Desenvolvedor ABAP,5,Painéis e relatórios customizados aprovados no blueprint
+Realizacao,S13,Revisão e validação dos dados carregados pelos Key Users,Key User Manutenção,5,Conferir consistência dos dados mestres
+Realizacao,S14,Ajustes finais pós-revisão e reprocessamento de dados,Consultor / Key User,3,Corrigir inconsistências identificadas
+Testes,S15,Preparação dos scripts de teste (UAT) por processo,Consultor SAP PM,3,Cobrir todos os cenários do blueprint
+Testes,S15,Teste: Localização Funcional — criação e pesquisa,Key User,2,Cenário completo com filtros e reportes
+Testes,S16,Teste: Equipamentos — criar instalar e desinstalar,Key User,2,Validar historial técnico
+Testes,S16,Teste: Ordens de Manutenção — fluxo completo com confirmação,Key User,3,Abertura planejamento e encerramento
+Testes,S16,Teste: Planos de Manutenção — agendamento e geração de OS,Key User,2,Verificar datas e ciclos gerados
+Testes,S17,Teste Integrado com MM: reserva de material via ordem,Key User PM / MM,2,Validar disponibilidade e baixa de estoque
+Testes,S17,Validação de relatórios e consultas gerenciais,Key User / Gestão,2,Incluir relatórios Z customizados
+Testes,S17,Registro e resolução das não-conformidades,Consultor SAP PM,2,Priorizar críticos para go-live
+Treinamento,S17,Elaboração do material de treinamento (manual do usuário),Consultor / Key User,5,Por perfil de usuário: planejador e executante
+Treinamento,S18,Treinamento de Key Users — reforço e multiplicadores,Consultor SAP PM,2,Preparar KUs para replicar o conhecimento
+Treinamento,S18,Treinamento usuários finais — Turma 1,Key User (multiplicador),2,Foco em operação diária: OS e PM
+Treinamento,S19,Treinamento usuários finais — Turma 2,Key User (multiplicador),2,Reforçar pontos críticos da Turma 1
+Treinamento,S19,Avaliação de aprendizagem e nivelamento,Consultor / RH,1,Identificar gaps antes do go-live
+Treinamento,S19,Homologação dos usuários para o go-live,Gerente de Manutenção,1,Lista de usuários habilitados para produção
+Go-Live,S20,Validação da Go-Live Readiness Checklist,PMO / Consultor,2,Dados carregados treinamento concluído suporte escalado
+Go-Live,S20,Cutover: carga de dados produtivos (FLs e Equipamentos),Consultor / Key User,2,Executar no ambiente produtivo (PRD)
+Go-Live,S20,Cutover: migração de ordens em aberto (se aplicável),Consultor / Key User,1,Ordens abertas no sistema legado ou manual
+Go-Live,S21,Go-Live — início das operações no SAP PM em produção,Todos,1,Data de corte definida no cronograma
+Go-Live,S21,Hypercare: suporte intensivo pós go-live (1ª semana),Consultor SAP PM,5,Presença on-site ou remota do consultor
+Go-Live,S22,Hypercare: suporte pós go-live (2ª semana),Consultor SAP PM,5,Disponibilidade para dúvidas e correções
+Go-Live,S22,Avaliação dos KPIs iniciais de performance do módulo,PMO / Gerência,2,OEE / MTTR / MTBF e ordens concluídas no prazo
+Go-Live,S22,Encerramento formal do projeto e lições aprendidas,PMO,1,Relatório final e aceite do cliente
