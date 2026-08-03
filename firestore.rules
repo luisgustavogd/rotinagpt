@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// Modelo de dados: cada usuário autenticado só acessa seus próprios documentos,
+// sob /users/{uid}/... . Não existe compartilhamento entre contas neste app —
+// é uma ferramenta pessoal, e a sincronização serve apenas para levar os dados
+// da mesma pessoa entre o iPhone e o Android dela.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
