@@ -1,9 +1,1 @@
-{
-  "name": "Minha Rotina (CSV v2)",
-  "short_name": "Rotina",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#656565",
-  "theme_color": "#ffffff",
-  "icons": []
-}
+{"name":"Travel Intelligence","short_name":"Travel Intel","start_url":".","display":"standalone","background_color":"#f5f1e8","theme_color":"#102820","icons":[]}
