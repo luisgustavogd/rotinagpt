@@ -106,7 +106,11 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      // Inexato de propósito: evita exigir a permissão especial de alarmes
+      // exatos do Android 12+ (SCHEDULE_EXACT_ALARM) para lembretes de
+      // refeição/proteína/atividade/peso/medicação, que toleram alguns
+      // minutos de atraso sem prejuízo.
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
   }
 

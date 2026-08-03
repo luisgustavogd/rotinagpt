@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- RF-063 — pedida em tempo de execução só quando o usuário configura o
+         primeiro lembrete (ver NotificationService.requestPermission()),
+         nunca na abertura inicial do app. Necessária a partir do Android 13
+         (API 33) para o diálogo de permissão de notificação funcionar. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="rotinagpt"
         android:name="${applicationName}"
