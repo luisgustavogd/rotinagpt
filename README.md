@@ -78,10 +78,12 @@ pessoais e não fazem sentido versionadas por terceiros). Para rodar:
    firebase deploy --only firestore:rules
    ```
 6. Configuração específica de plataforma:
-   - **iOS**: abra `ios/Runner.xcworkspace` no Xcode → target Runner →
-     Signing & Capabilities → "+ Capability" → **Sign in with Apple** (o
-     Xcode cria/atualiza `ios/Runner/Runner.entitlements`, que já existe
-     neste repo como ponto de partida).
+   - **iOS**: `ios/Runner/Runner.entitlements` (com a entitlement de Sign in
+     with Apple) já existe e já está referenciado no projeto Xcode
+     (`CODE_SIGN_ENTITLEMENTS`). Abra `ios/Runner.xcworkspace` no Xcode →
+     target Runner → Signing & Capabilities e confirme que "Sign in with
+     Apple" aparece habilitado; se não aparecer, adicione via "+ Capability"
+     (o Xcode reaproveita o arquivo existente).
    - **Android**: registre o SHA-1/SHA-256 de debug e release do seu keystore
      no projeto Firebase, para o Google Sign-In funcionar
      (`./gradlew signingReport` mostra os hashes).
@@ -107,11 +109,16 @@ flutter test
   RF), sem Firebase.
 - `test/data/` — repositórios e o fluxo de backup/restauração usando
   `fake_cloud_firestore`.
-- Regras de segurança do Firestore (`firestore.rules`): não têm um executor
-  automatizado neste repo (exigiria o Firebase Local Emulator Suite com
-  Node.js); valide manualmente rodando `firebase emulators:start` e testando
-  que um `uid` nunca lê/escreve documento de outro antes de publicar em
-  produção.
+- `firestore-tests/` — testes das Security Rules (`firestore.rules`) via
+  Firebase Local Emulator Suite, confirmando que um `uid` nunca lê nem
+  escreve documento de outro e que acesso não autenticado é sempre negado:
+  ```
+  cd firestore-tests
+  npm install
+  npm test
+  ```
+  (a primeira execução baixa o emulador do Firestore; precisa de rede
+  liberada para `storage.googleapis.com`/`firebase.google.com`.)
 
 ## Privacidade e limites (leia antes de usar)
 
