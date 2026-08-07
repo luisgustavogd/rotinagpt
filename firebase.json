@@ -1,17 +1,1 @@
-{
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "emulators": {
-    "auth": {
-      "port": 9099
-    },
-    "firestore": {
-      "port": 8080
-    },
-    "ui": {
-      "enabled": true
-    }
-  }
-}
+{"firestore":{"rules":"firestore.rules","indexes":"firestore.indexes.json"},"emulators":{"auth":{"port":9099},"firestore":{"port":8080},"ui":{"enabled":true}},"flutter":{"platforms":{"android":{"default":{"projectId":"saude-em-foco-c49c3","appId":"1:93551519798:android:b8243f206f90d1315d1097","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"saude-em-foco-c49c3","configurations":{"android":"1:93551519798:android:b8243f206f90d1315d1097"}}}}}}
