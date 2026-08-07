@@ -1,9 +1,7 @@
-// GERADO AUTOMATICAMENTE por `flutterfire configure`.
-//
-// As credenciais do Android correspondem ao projeto Firebase real
-// "Saude em foco" (saude-em-foco-c49c3). O bloco iOS ainda é placeholder —
-// será preenchido quando a Fase 2 (Apple Developer Program) rodar
-// `flutterfire configure` novamente com a plataforma ios incluída.
+// Modelo — NÃO use estes valores. Rode `flutterfire configure` na raiz do
+// repositório com o seu próprio projeto Firebase; o comando gera
+// lib/firebase_options.dart de verdade (gitignored) com as credenciais reais.
+// Veja o README, seção "Configurar o Firebase".
 //
 // ignore_for_file: type=lint
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
@@ -30,11 +28,11 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDPy1wn5WY0HBe_hPV72Rt_-gOkLeREOmM',
-    appId: '1:93551519798:android:b8243f206f90d1315d1097',
-    messagingSenderId: '93551519798',
-    projectId: 'saude-em-foco-c49c3',
-    storageBucket: 'saude-em-foco-c49c3.firebasestorage.app',
+    apiKey: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
+    appId: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
+    messagingSenderId: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
+    projectId: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
+    storageBucket: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
   );
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',

@@ -33,6 +33,14 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Credenciais do Firebase — não são segredo (a segurança vem das Security
+# Rules/Auth, não de escondê-las), mas higiene padrão é não deixá-las
+# publicamente indexáveis. Cada dev roda `flutterfire configure` localmente
+# para gerar a versão real; veja os arquivos .example correspondentes.
+/lib/firebase_options.dart
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+
 # Symbolication related
 app.*.symbols
 

@@ -1,0 +1,25 @@
+{
+  "project_info": {
+    "project_number": "REPLACE_WITH_FLUTTERFIRE_CONFIGURE",
+    "project_id": "REPLACE_WITH_FLUTTERFIRE_CONFIGURE",
+    "storage_bucket": "REPLACE_WITH_FLUTTERFIRE_CONFIGURE"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "REPLACE_WITH_FLUTTERFIRE_CONFIGURE",
+        "android_client_info": {
+          "package_name": "com.luisgustavogd.rotinagpt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "REPLACE_WITH_FLUTTERFIRE_CONFIGURE"
+        }
+      ],
+      "services": {}
+    }
+  ],
+  "configuration_version": "1"
+}

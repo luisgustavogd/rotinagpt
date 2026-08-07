@@ -72,12 +72,14 @@ pessoais e não fazem sentido versionadas por terceiros). Para rodar:
    ```
    flutterfire configure
    ```
-   Isso gera `lib/firebase_options.dart` (substituindo o placeholder deste
-   repo), `android/app/google-services.json` e
-   `ios/Runner/GoogleService-Info.plist` com as credenciais do seu projeto.
-   Esses arquivos identificam o app, não são segredo — a segurança vem das
-   Security Rules, do Firebase Auth e do App Check, não de escondê-los — por
-   isso são versionados normalmente.
+   Isso gera `lib/firebase_options.dart`, `android/app/google-services.json`
+   e `ios/Runner/GoogleService-Info.plist` com as credenciais do seu projeto
+   (modelo em `*.example` ao lado de cada um). Essas credenciais identificam
+   o app e não funcionam como segredo por si só — a segurança vem das
+   Security Rules, do Firebase Auth e do App Check — mas por padrão de
+   higiene (evitar scanners de segredo, scraping automatizado) esses três
+   arquivos ficam fora do Git (`.gitignore`); cada pessoa que clonar o repo
+   gera a própria versão local rodando `flutterfire configure`.
 4. No Firebase Console, habilite:
    - **Firestore Database** (modo produção).
    - **Authentication** → provedores **Apple** e **Google**.
