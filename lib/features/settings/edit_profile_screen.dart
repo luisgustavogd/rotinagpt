@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/di/providers.dart';
+import '../../domain/profile/bmi_calculator.dart';
 import '../../domain/profile/goal_history_entry.dart';
 import '../../domain/profile/user_profile.dart';
 
@@ -44,6 +45,56 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TimeOfDay _wakeTime = _parseTime(widget.profile.wakeTime);
   late TimeOfDay _sleepTime = _parseTime(widget.profile.sleepTime);
   bool _saving = false;
+
+  // Diferente do onboarding, aqui a meta já existe e foi escolhida pelo
+  // usuário — só passamos a sugerir de novo (e mostrar o aviso) se ele
+  // editar o campo manualmente e o deixar em branco, ou seja, pedir uma
+  // nova sugestão. Editar peso/altura sozinho não deve sobrescrever uma
+  // meta que ele já definiu.
+  bool _targetWeightAutoFilled = false;
+  bool _isProgrammaticTargetWeightUpdate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _weightController.addListener(_onWeightOrHeightChanged);
+    _heightController.addListener(_onWeightOrHeightChanged);
+    _targetWeightController.addListener(_onTargetWeightChanged);
+  }
+
+  void _onTargetWeightChanged() {
+    if (_isProgrammaticTargetWeightUpdate) return;
+    if (_targetWeightController.text.trim().isEmpty) {
+      setState(() => _targetWeightAutoFilled = true);
+      return;
+    }
+    if (_targetWeightAutoFilled) {
+      setState(() => _targetWeightAutoFilled = false);
+    }
+  }
+
+  void _onWeightOrHeightChanged() {
+    if (!_targetWeightAutoFilled) {
+      setState(() {});
+      return;
+    }
+    final heightCm = double.tryParse(
+      _heightController.text.replaceAll(',', '.'),
+    );
+    final weightKg = double.tryParse(
+      _weightController.text.replaceAll(',', '.'),
+    );
+    final suggested = weightKg == null
+        ? null
+        : BmiCalculator.suggestedTargetWeightKg(heightCm);
+    setState(() {
+      if (suggested != null) {
+        _isProgrammaticTargetWeightUpdate = true;
+        _targetWeightController.text = suggested.toStringAsFixed(1);
+        _isProgrammaticTargetWeightUpdate = false;
+      }
+    });
+  }
 
   static String _fmtNum(double v) =>
       v == v.roundToDouble() ? v.toInt().toString() : v.toString();
@@ -145,6 +196,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final weightKg = double.tryParse(
+      _weightController.text.replaceAll(',', '.'),
+    );
+    final heightCm = double.tryParse(
+      _heightController.text.replaceAll(',', '.'),
+    );
+    final bmi = weightKg == null ? null : BmiCalculator.bmi(weightKg, heightCm);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Editar perfil')),
       body: SafeArea(
@@ -180,14 +239,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   labelText: 'Altura em cm (opcional)',
                 ),
               ),
+              if (bmi != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'IMC: ${bmi.toStringAsFixed(1)}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
               const SizedBox(height: 12),
               TextFormField(
                 controller: _targetWeightController,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Meta de peso (kg)',
+                  helperText: _targetWeightAutoFilled
+                      ? 'Valor calculado baseado na faixa central do IMC'
+                      : null,
+                  helperMaxLines: 2,
                 ),
                 validator: (v) =>
                     (v == null ||

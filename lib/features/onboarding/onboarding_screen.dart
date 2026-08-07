@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/di/providers.dart';
+import '../../domain/profile/bmi_calculator.dart';
 import '../../domain/profile/goal_history_entry.dart';
 import '../../domain/profile/user_profile.dart';
 
@@ -28,6 +29,50 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   TimeOfDay _wakeTime = const TimeOfDay(hour: 7, minute: 0);
   TimeOfDay _sleepTime = const TimeOfDay(hour: 22, minute: 0);
   bool _saving = false;
+
+  // A meta de peso é sugerida automaticamente (IMC central 21,75) assim que
+  // peso e altura são informados. Deixa de ser sugerida no momento em que o
+  // usuário edita o campo manualmente — a partir daí o valor é só dele.
+  bool _targetWeightAutoFilled = true;
+  bool _isProgrammaticTargetWeightUpdate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _weightController.addListener(_onWeightOrHeightChanged);
+    _heightController.addListener(_onWeightOrHeightChanged);
+    _targetWeightController.addListener(_onTargetWeightChanged);
+  }
+
+  void _onTargetWeightChanged() {
+    if (_isProgrammaticTargetWeightUpdate) return;
+    if (_targetWeightAutoFilled) {
+      setState(() => _targetWeightAutoFilled = false);
+    }
+  }
+
+  void _onWeightOrHeightChanged() {
+    if (!_targetWeightAutoFilled) {
+      setState(() {});
+      return;
+    }
+    final heightCm = double.tryParse(
+      _heightController.text.replaceAll(',', '.'),
+    );
+    final weightKg = double.tryParse(
+      _weightController.text.replaceAll(',', '.'),
+    );
+    final suggested = weightKg == null
+        ? null
+        : BmiCalculator.suggestedTargetWeightKg(heightCm);
+    setState(() {
+      if (suggested != null) {
+        _isProgrammaticTargetWeightUpdate = true;
+        _targetWeightController.text = suggested.toStringAsFixed(1);
+        _isProgrammaticTargetWeightUpdate = false;
+      }
+    });
+  }
 
   String _fmt(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
@@ -112,6 +157,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final weightKg = double.tryParse(
+      _weightController.text.replaceAll(',', '.'),
+    );
+    final heightCm = double.tryParse(
+      _heightController.text.replaceAll(',', '.'),
+    );
+    final bmi = weightKg == null ? null : BmiCalculator.bmi(weightKg, heightCm);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Vamos configurar seu app')),
       body: SafeArea(
@@ -147,14 +200,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   labelText: 'Altura em cm (opcional)',
                 ),
               ),
+              if (bmi != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'IMC: ${bmi.toStringAsFixed(1)}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
               const SizedBox(height: 12),
               TextFormField(
                 controller: _targetWeightController,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Meta de peso (kg)',
+                  helperText: _targetWeightAutoFilled
+                      ? 'Valor calculado baseado na faixa central do IMC'
+                      : null,
+                  helperMaxLines: 2,
                 ),
                 validator: (v) =>
                     (v == null ||
