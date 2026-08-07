@@ -1,3 +1,5 @@
+import 'protein_target_calculator.dart';
+
 /// RF-001/RF-002/RF-003 — perfil pessoal. Somente o essencial: nada aqui é
 /// coletado por obrigatório além do que o app precisa para montar o painel do
 /// dia e as metas.
@@ -8,6 +10,7 @@ class UserProfile {
     this.heightCm,
     required this.targetWeightKg,
     required this.targetProteinG,
+    this.proteinActivityLevel,
     required this.wakeTime,
     required this.sleepTime,
     this.restrictions = const [],
@@ -21,10 +24,16 @@ class UserProfile {
   final double? heightCm;
   final double targetWeightKg;
 
-  /// Meta diária de proteína em gramas (RF-002). Configuração manual — o app
+  /// Meta diária de proteína em gramas (RF-002). Pode ser sugerida a partir
+  /// de [proteinActivityLevel] e do peso, ou digitada manualmente — o app
   /// sempre deve exibir o aviso de que o valor precisa ser validado por
   /// profissional (ver copy em features/onboarding).
   final double targetProteinG;
+
+  /// Base usada para a última sugestão de [targetProteinG] (ver
+  /// ProteinTargetCalculator e docs/NUTRICAO.md). Null quando o valor foi só
+  /// digitado manualmente, sem usar a calculadora.
+  final ProteinActivityLevel? proteinActivityLevel;
 
   /// Horário habitual, formato "HH:mm".
   final String wakeTime;
@@ -43,6 +52,7 @@ class UserProfile {
     double? heightCm,
     double? targetWeightKg,
     double? targetProteinG,
+    ProteinActivityLevel? proteinActivityLevel,
     String? wakeTime,
     String? sleepTime,
     List<String>? restrictions,
@@ -55,6 +65,7 @@ class UserProfile {
       heightCm: heightCm ?? this.heightCm,
       targetWeightKg: targetWeightKg ?? this.targetWeightKg,
       targetProteinG: targetProteinG ?? this.targetProteinG,
+      proteinActivityLevel: proteinActivityLevel ?? this.proteinActivityLevel,
       wakeTime: wakeTime ?? this.wakeTime,
       sleepTime: sleepTime ?? this.sleepTime,
       restrictions: restrictions ?? this.restrictions,

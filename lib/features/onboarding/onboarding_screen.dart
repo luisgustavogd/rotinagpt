@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/di/providers.dart';
 import '../../domain/profile/bmi_calculator.dart';
 import '../../domain/profile/goal_history_entry.dart';
+import '../../domain/profile/protein_target_calculator.dart';
 import '../../domain/profile/user_profile.dart';
 
 /// RF-001/RF-002/RF-003 — onboarding: só o essencial, sem cadastro
@@ -36,12 +37,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   bool _targetWeightAutoFilled = true;
   bool _isProgrammaticTargetWeightUpdate = false;
 
+  // A meta de proteína é sugerida a partir do peso e do nível de atividade
+  // escolhido (ver docs/NUTRICAO.md). Some/deixa de recalcular pela mesma
+  // regra da meta de peso: editar o campo manualmente desliga a sugestão.
+  ProteinActivityLevel? _proteinActivityLevel;
+  bool _targetProteinAutoFilled = false;
+  bool _isProgrammaticTargetProteinUpdate = false;
+
   @override
   void initState() {
     super.initState();
     _weightController.addListener(_onWeightOrHeightChanged);
     _heightController.addListener(_onWeightOrHeightChanged);
     _targetWeightController.addListener(_onTargetWeightChanged);
+    _targetProteinController.addListener(_onTargetProteinChanged);
   }
 
   void _onTargetWeightChanged() {
@@ -51,27 +60,57 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  void _onWeightOrHeightChanged() {
-    if (!_targetWeightAutoFilled) {
-      setState(() {});
-      return;
+  void _onTargetProteinChanged() {
+    if (_isProgrammaticTargetProteinUpdate) return;
+    if (_targetProteinAutoFilled) {
+      setState(() => _targetProteinAutoFilled = false);
     }
-    final heightCm = double.tryParse(
-      _heightController.text.replaceAll(',', '.'),
-    );
+  }
+
+  void _onWeightOrHeightChanged() {
     final weightKg = double.tryParse(
       _weightController.text.replaceAll(',', '.'),
     );
-    final suggested = weightKg == null
-        ? null
-        : BmiCalculator.suggestedTargetWeightKg(heightCm);
-    setState(() {
-      if (suggested != null) {
+
+    if (_targetWeightAutoFilled) {
+      final heightCm = double.tryParse(
+        _heightController.text.replaceAll(',', '.'),
+      );
+      final suggestedWeight = weightKg == null
+          ? null
+          : BmiCalculator.suggestedTargetWeightKg(heightCm);
+      if (suggestedWeight != null) {
         _isProgrammaticTargetWeightUpdate = true;
-        _targetWeightController.text = suggested.toStringAsFixed(1);
+        _targetWeightController.text = suggestedWeight.toStringAsFixed(1);
         _isProgrammaticTargetWeightUpdate = false;
       }
+    }
+
+    _recomputeProteinSuggestion(weightKg);
+    setState(() {});
+  }
+
+  void _onProteinActivityLevelChanged(ProteinActivityLevel? level) {
+    setState(() {
+      _proteinActivityLevel = level;
+      if (level != null) _targetProteinAutoFilled = true;
     });
+    final weightKg = double.tryParse(
+      _weightController.text.replaceAll(',', '.'),
+    );
+    _recomputeProteinSuggestion(weightKg);
+  }
+
+  void _recomputeProteinSuggestion(double? weightKg) {
+    if (!_targetProteinAutoFilled || _proteinActivityLevel == null) return;
+    if (weightKg == null) return;
+    final suggested = ProteinTargetCalculator.suggestedTargetProteinG(
+      weightKg,
+      _proteinActivityLevel!,
+    );
+    _isProgrammaticTargetProteinUpdate = true;
+    _targetProteinController.text = suggested.toStringAsFixed(1);
+    _isProgrammaticTargetProteinUpdate = false;
   }
 
   String _fmt(TimeOfDay t) =>
@@ -106,6 +145,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       targetProteinG: double.parse(
         _targetProteinController.text.replaceAll(',', '.'),
       ),
+      proteinActivityLevel: _proteinActivityLevel,
       wakeTime: _fmt(_wakeTime),
       sleepTime: _fmt(_sleepTime),
       restrictions: _restrictionsController.text.trim().isEmpty
@@ -227,16 +267,34 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     : null,
               ),
               const SizedBox(height: 12),
+              DropdownButtonFormField<ProteinActivityLevel?>(
+                initialValue: _proteinActivityLevel,
+                decoration: const InputDecoration(
+                  labelText: 'Nível de atividade (calcula a meta de proteína)',
+                ),
+                items: [
+                  const DropdownMenuItem<ProteinActivityLevel?>(
+                    child: Text('Não calcular automaticamente'),
+                  ),
+                  for (final level in ProteinActivityLevel.values)
+                    DropdownMenuItem(value: level, child: Text(level.label)),
+                ],
+                onChanged: _onProteinActivityLevelChanged,
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _targetProteinController,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Meta diária de proteína (g)',
-                  helperText:
-                      'Esse valor deve ser validado por um profissional de saúde.',
-                  helperMaxLines: 2,
+                  helperText: _targetProteinAutoFilled
+                      ? 'Valor calculado baseado no estudo referenciado em '
+                            'docs/NUTRICAO.md. Ainda assim, valide com um '
+                            'profissional de saúde.'
+                      : 'Esse valor deve ser validado por um profissional de saúde.',
+                  helperMaxLines: 3,
                 ),
                 validator: (v) =>
                     (v == null ||

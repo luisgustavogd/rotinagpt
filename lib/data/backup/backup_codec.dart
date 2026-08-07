@@ -12,6 +12,7 @@ import '../../domain/nutrition/meal_entry.dart';
 import '../../domain/nutrition/meal_item.dart';
 import '../../domain/nutrition/meal_unit.dart';
 import '../../domain/profile/goal_history_entry.dart';
+import '../../domain/profile/protein_target_calculator.dart';
 import '../../domain/profile/user_profile.dart';
 
 /// Codec de JSON puro (datas como ISO-8601, sem `Timestamp` do Firestore)
@@ -26,6 +27,7 @@ class BackupCodec {
     'heightCm': p.heightCm,
     'targetWeightKg': p.targetWeightKg,
     'targetProteinG': p.targetProteinG,
+    'proteinActivityLevel': p.proteinActivityLevel?.name,
     'wakeTime': p.wakeTime,
     'sleepTime': p.sleepTime,
     'restrictions': p.restrictions,
@@ -39,6 +41,11 @@ class BackupCodec {
     heightCm: (j['heightCm'] as num?)?.toDouble(),
     targetWeightKg: (j['targetWeightKg'] as num).toDouble(),
     targetProteinG: (j['targetProteinG'] as num).toDouble(),
+    proteinActivityLevel: (j['proteinActivityLevel'] as String?) == null
+        ? null
+        : ProteinActivityLevel.values.byName(
+            j['proteinActivityLevel'] as String,
+          ),
     wakeTime: j['wakeTime'] as String,
     sleepTime: j['sleepTime'] as String,
     restrictions: List<String>.from(j['restrictions'] as List? ?? []),

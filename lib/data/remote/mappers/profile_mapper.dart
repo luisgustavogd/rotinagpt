@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../domain/profile/goal_history_entry.dart';
+import '../../../domain/profile/protein_target_calculator.dart';
 import '../../../domain/profile/user_profile.dart';
 
 class ProfileMapper {
@@ -12,6 +13,7 @@ class ProfileMapper {
     'heightCm': profile.heightCm,
     'targetWeightKg': profile.targetWeightKg,
     'targetProteinG': profile.targetProteinG,
+    'proteinActivityLevel': profile.proteinActivityLevel?.name,
     'wakeTime': profile.wakeTime,
     'sleepTime': profile.sleepTime,
     'restrictions': profile.restrictions,
@@ -25,6 +27,11 @@ class ProfileMapper {
     heightCm: (map['heightCm'] as num?)?.toDouble(),
     targetWeightKg: (map['targetWeightKg'] as num).toDouble(),
     targetProteinG: (map['targetProteinG'] as num).toDouble(),
+    proteinActivityLevel: (map['proteinActivityLevel'] as String?) == null
+        ? null
+        : ProteinActivityLevel.values.byName(
+            map['proteinActivityLevel'] as String,
+          ),
     wakeTime: map['wakeTime'] as String,
     sleepTime: map['sleepTime'] as String,
     restrictions: List<String>.from(map['restrictions'] as List? ?? []),

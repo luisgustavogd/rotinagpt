@@ -38,6 +38,15 @@ lib/
                     # progress, routine, health, settings, shell (nav)
 ```
 
+## Documentação
+
+Documentação mais longa (referências de estudos usados em cálculos, decisões
+de produto, regras de negócio detalhadas) fica em [`docs/`](docs/), fora
+deste README. Hoje inclui:
+
+- [`docs/NUTRICAO.md`](docs/NUTRICAO.md) — metodologia e referência do
+  estudo usado para sugerir a meta diária de proteína.
+
 `domain` nunca depende de `data` nem de Flutter — só o contrário. Isso permite
 testar toda regra de negócio (soma de proteína, médias, checagem de dose,
 duplicidade de medicação, adesão semanal, agendamento de lembretes, diff de
