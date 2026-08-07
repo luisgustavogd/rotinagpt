@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/di/providers.dart';
@@ -91,8 +92,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     );
 
-    if (mounted) setState(() => _saving = false);
-    // A guarda de rota detecta o perfil recém-criado e navega sozinha.
+    if (!mounted) return;
+    setState(() => _saving = false);
+    // O GoRouter só reavalia o redirect quando o auth state muda, não quando
+    // o perfil é criado no Firestore — por isso navegamos explicitamente.
+    context.go('/today');
   }
 
   @override
