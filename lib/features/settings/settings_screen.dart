@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
@@ -45,6 +46,15 @@ class SettingsScreen extends ConsumerWidget {
                     ? 'Nenhum perfil configurado'
                     : 'Meta: ${profile.targetWeightKg} kg · ${profile.targetProteinG} g proteína/dia',
               ),
+              trailing: profile == null
+                  ? null
+                  : const Icon(Icons.chevron_right),
+              onTap: profile == null
+                  ? null
+                  : () => context.push(
+                      '/more/settings/edit-profile',
+                      extra: profile,
+                    ),
             ),
             loading: () => const ListTile(title: Text('Carregando perfil...')),
             error: (e, _) => ListTile(title: Text('Erro: $e')),

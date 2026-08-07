@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/di/providers.dart';
 import '../data/remote/firestore_paths.dart';
+import '../domain/profile/user_profile.dart';
 import '../features/auth/sign_in_screen.dart';
 import '../features/health/health_screen.dart';
 import '../features/more/more_screen.dart';
@@ -13,6 +14,7 @@ import '../features/nutrition/nutrition_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/progress/progress_screen.dart';
 import '../features/routine/routine_screen.dart';
+import '../features/settings/edit_profile_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/today/today_screen.dart';
@@ -103,6 +105,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'settings',
                 builder: (context, state) => const SettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'edit-profile',
+                    builder: (context, state) =>
+                        EditProfileScreen(profile: state.extra! as UserProfile),
+                  ),
+                ],
               ),
             ],
           ),
